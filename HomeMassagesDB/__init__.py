@@ -3,4 +3,4 @@
 from .home_messages_db import HomeMessagesDB
 
 # Setting import wildcard
-__all__ = ["HomeMassagesDB"]
+__all__ = ["HomeMessagesDB"]
