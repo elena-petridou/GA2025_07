@@ -6,7 +6,10 @@ class HomeMessagesDB:
     def __init__(self, url):
         self.url = url
 
-    def create():
+    def create_db():
         if not FileExists(self.url):
             db = create_engine(self.url)
+    
+    def smartthings(table_name):
+        
     
