@@ -6,7 +6,7 @@ class HomeMessagesDB:
     def __init__(self, url):
         self.url = url
 
-    def create():
+    def create_db():
         """Create Database if it doesn't exist"""
         if not FileExists(self.url):
             db = create_engine(self.url)
@@ -56,3 +56,6 @@ class HomeMessagesDB:
             FOREIGN KEY (epoch) 
                 REFERENCES smartthings (epoch)
         )
+    
+        
+    

@@ -9,4 +9,6 @@ class HomeMessagesDB:
     def create():
         if not FileExists(self.url):
             db = create_engine(self.url)
+    def create_table(table_name):
+        %sql CREATE 
     
