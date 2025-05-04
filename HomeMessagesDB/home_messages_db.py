@@ -15,20 +15,21 @@ class HomeMessagesDB:
     def __repl__(self, url):
         return(f"The database has URL {self.url}")
         
-    def create_db():
+    def create_db(self):
         """
         Create Database if it doesn't exist
         """
         db = sa.create_engine(self.url)
             
-    def insert_table_smartthings(file_name):
+    def insert_table_smartthings(self,file_name):
         """
         Create (if it doesnt exist) tables of smart things and devices
         """
 
         # Importing the data with Pandas
-        smartthings, devices = pd.read_csv(file_name, sep="\t")
-
+        smartthings = pd.read_csv(file_name, sep="\t")
+        devices = pd.read_csv(file_name, sep="\t")
+        
         # Preparing the data
         smartthings["epoch"] = smartthings["epoch"].timestamp()
         smartthings = smartthings.copy()
