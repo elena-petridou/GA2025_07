@@ -4,7 +4,6 @@ import shutil
 from datetime import datetime
 import gzip
 import logging
-import json
 
 class HomeMessagesDB:
     """
