@@ -20,78 +20,95 @@ class HomeMessagesDB:
         """
         Create Database if it doesn't exist
         """
+        # Connecting to the db
         self.db = sa.create_engine(self.url)
-            
+
+        # Creating empty table smartthings
+        try:
+            create_query = sa.text("""CREATE TABLE IF NOT EXISTS smartthings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            epoch TEXT NOT NULL,
+            capability TEXT NOT NULL,
+            attribute TEXT NOT NULL,
+            unit TEXT,
+            value_int NUMERIC,
+            value_str TEXT
+            )""")
+            connection.execute(create_query)
+        except Exception as e:
+            logging.error(f"SQL CREATE function failed for table 'smartthings': {e}")
+            raise e
+
+        # Creating empty table devices
+        try:
+            devices_query = sa.text("""CREATE TABLE IF NOT EXISTS devices (
+            name TEXT PRIMARY KEY,
+            level TEXT NOT NULL,
+            loc TEXT NOT NULL,
+            FOREIGN KEY (name) 
+                REFERENCES smartthings (name)
+            )""")
+            connection.execute(devices_query)
+        except Exception as e:
+            logging.error(f"SQL CREATE function failed for table 'devices': {e}")
+            raise e
+
+        # Creating empty table p1e
+        try:
+            p1e_query = sa.text("""CREATE TABLE IF NOT EXISTS p1e (
+            epoch INTEGER PRIMARY KEY,
+            Import_T1_kWh NUMERIC,
+            Import_T2_kWh NUMERIC,
+            Export_T1_kWh NUMERIC,
+            Export_T2_kWh NUMERIC,
+            Electricity_imported_T1 NUMERIC,
+            Electricity_imported_T2 NUMERIC,
+            Electricity_exported_T1 NUMERIC,
+            Electricity_exported_T2 NUMERIC,
+            FOREIGN KEY (epoch) 
+                REFERENCES smartthings (epoch)
+            )""")
+            connection.execute(p1e_query)
+        except Exception as e:
+            logging.error(f"SQL CREATE function failed for table 'p1e': {e}")
+            raise e
+
+        # Creating empty table p1g
+        try:
+            p1g_query = sa.text("""CREATE TABLE IF NOT EXISTS p1g (
+            epoch INTEGER PRIMARY KEY,
+            Total_gas_used NUMERIC,
+            FOREIGN KEY (epoch) 
+                REFERENCES smartthings (epoch)
+            )""")
+            connection.execute(p1g_query)
+        except Exception as e:
+            logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
+            raise e
+
     def insert_table_smartthings(self,file_name):
         """
         Create (if it doesnt exist) tables of smart things and devices
         """
-
         # Importing the data with Pandas
         smartthings = pd.read_csv(file_name, sep="\t")
         devices = pd.read_csv(file_name, sep="\t")
 
         # Preparing the data
-        
-        # Change epoch to UNIX time  
-    
-        # Make a copy to avoid warnings
         smartthings = smartthings.copy()
-
-        # Convert to datetime and then to UNIX timestamp 
         smartthings["epoch"] = pd.to_datetime(smartthings["epoch"], utc=True).astype("int64") // 10**9  
-    
         smartthings.loc[:, 'value_int'] = pd.to_numeric(smartthings['value'], errors='coerce')
         smartthings.loc[:, 'value_str'] = smartthings['value'].where(smartthings['value_int'].isna())
-        
-        # Drop columns that won't be used here, but in the devices table
         smartthings.drop(["loc","level", "value"], inplace=True, axis = 1)
 
         # Inserting the table in the database
         with self.db.connect() as connection:
             try:
-                try:
-                    create_query = sa.text("""CREATE TABLE IF NOT EXISTS smartthings (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    epoch TEXT NOT NULL,
-                    capability TEXT NOT NULL,
-                    attribute TEXT NOT NULL,
-                    unit TEXT,
-                    value_int NUMERIC,
-                    value_str TEXT
-                    )""")
-                    connection.execute(create_query)
-                except Exception as e:
-                    logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
-                    raise e
-                try:
-                    smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
-                except Exception as e:
-                    logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-                    raise e
+                smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
             except Exception as e:
-                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                    raise e
-
-        # Creating foreign keys only for the tables that exist
-        for table in ["p1e","p1g"]:
-            table_names = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
-            with self.db.connect() as connection:
-                tables = connection.execute(table_names).fetchone()
-                if tables:
-                    fk_smartthings = sa.text(f'''ALTER TABLE smartthings
-                            ADD CONSTRAINT fk_smartthings_{table}
-                            FOREIGN KEY (epoch) 
-                                REFERENCES {table} (epoch)''')
-                    try:
-                        connection.execute(fk_smartthings)
-                        logging.info(f"Foreign key to table {table} created successfully.")
-                    except Exception as e:
-                        logging.error(f"Could not create foreign key to table {table}: {e}")
-                        raise e
-                else:
-                    logging.info(f"Table {table} was not found.")
+                logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                raise e
         
         # Preparing the devices table, which contains information about the devices
         devices.drop(devices.columns.difference(["loc","level","name"]), axis=1, inplace=True)
@@ -99,34 +116,13 @@ class HomeMessagesDB:
 
         # Inserting the devices table into the database
         with self.db.connect() as connection:
-            try:
+            for i in range(devices.shape[0]):
+                insert_query = sa.text(f"""INSERT OR REPLACE INTO devices (name, level, loc) 
+                    VALUES ('{devices.loc[i,"name"]}', '{devices.loc[i,"level"]}', '{devices.loc[i,"loc"]}')""")
                 try:
-                    devices_query = sa.text("""CREATE TABLE IF NOT EXISTS devices (
-                    name TEXT PRIMARY KEY,
-                    level TEXT NOT NULL,
-                    loc TEXT NOT NULL,
-                    FOREIGN KEY (name) 
-                        REFERENCES smartthings (name)
-                    )""")
-                    connection.execute(devices_query)
+                    connection.execute(insert_query)
                 except Exception as e:
-                    logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
-                    raise e
-                for i in range(devices.shape[0]):
-                    insert_query = sa.text(f"""INSERT OR REPLACE INTO devices (name, level, loc) 
-                        VALUES ('{devices.loc[i,"name"]}', '{devices.loc[i,"level"]}', '{devices.loc[i,"loc"]}')""")
-                    try:
-                        connection.execute(insert_query)
-                    except Exception as e:
-                        logging.error(f"Could not insert device {devices.loc[i,"name"]}: {e}")
-                        raise e
-#                try:
-#                    devices.to_sql("devices", self.db.connect(), if_exist="append", index=False)
-#                except Exception as e:
-#                    logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-#                    raise e
-            except Exception as e:
-                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                    logging.error(f"Could not insert device {devices.loc[i,"name"]}: {e}")
                     raise e
         
     def insert_table_p1e(self, file_name):
@@ -146,48 +142,10 @@ class HomeMessagesDB:
         # Inserting the table into the database
         with self.db.connect() as connection:
             try:
-                try:
-                    p1e_query = sa.text("""CREATE TABLE IF NOT EXISTS p1e (
-                    epoch INTEGER PRIMARY KEY,
-                    Import_T1_kWh NUMERIC,
-                    Import_T2_kWh NUMERIC,
-                    Export_T1_kWh NUMERIC,
-                    Export_T2_kWh NUMERIC,
-                    Electricity_imported_T1 NUMERIC,
-                    Electricity_imported_T2 NUMERIC,
-                    Electricity_exported_T1 NUMERIC,
-                    Electricity_exported_T2 NUMERIC
-                    )""")
-                    connection.execute(p1e_query)
-                except Exception as e:
-                    logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
-                    raise e
-                try:
-                    p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
-                except Exception as e:
-                    logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-                    raise e
+                p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
             except Exception as e:
-                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                    raise e
-
-        # Handling the foreign key
-        table_names = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='smartthings'")
-        with self.db.connect() as connection:
-            tables = connection.execute(table_names).fetchone()
-            if tables:
-                fk_p1e = sa.text('''ALTER TABLE p1e
-                        ADD CONSTRAINT fk_p1e_smartthings
-                        FOREIGN KEY (epoch) 
-                        REFERENCES smartthings (epoch)''')
-                try:
-                    connection.execute(fk_p1e)
-                    logging.info("Foreign key to table 'smartthings' created successfully")
-                except Exception as e:
-                    logging.error(f"Could not create foreign key to table 'smartthings': {e}")
-                    raise e
-            else:
-                logging.info("Table 'smartthings' does not exist")
+                logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                raise e
         
     def insert_table_p1g(self, file_name):
         """
@@ -204,41 +162,10 @@ class HomeMessagesDB:
         # Inserting the table into the database
         with self.db.connect() as connection:
             try:
-                try:
-                    p1g_query = sa.text("""CREATE TABLE IF NOT EXISTS p1g (
-                    epoch INTEGER PRIMARY KEY,
-                    Total_gas_used NUMERIC
-                )""")
-                    connection.execute(p1g_query)
-                except Exception as e:
-                    logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
-                    raise e
-                try:
-                    p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
-                except Exception as e:
-                    logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-                    raise e
+                p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
             except Exception as e:
-                logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                raise e   
-
-        # Handling the foreign key
-        table_names = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='smartthings'")
-        with self.db.connect() as connection:
-            tables = connection.execute(table_names).fetchone()
-            if tables:
-                fk_p1g = sa.text('''ALTER TABLE p1g
-                        ADD CONSTRAINT fk_p1g_smartthings
-                        FOREIGN KEY (epoch) 
-                        REFERENCES smartthings (epoch)''')
-                try:
-                    connection.execute(fk_p1g)
-                    logging.info("Foreign key to table 'smartthings' created successfully")
-                except Exception as e:
-                    logging.error(f"Could not create foreign key to 'smartthings': {e}")
-                    raise e
-            else:
-                logging.info("Table 'smartthings' does not exist.")
+                logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
+                raise e 
 
     def query_db(self, query):
         """
