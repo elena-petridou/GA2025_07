@@ -107,7 +107,7 @@ class HomeMessagesDB:
                     loc TEXT NOT NULL,
                     FOREIGN KEY (name) 
                         REFERENCES smartthings (name)
-                    )"""
+                    )""")
                     connection.execute(devices_query)
                 except Exception as e:
                     logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
@@ -147,7 +147,7 @@ class HomeMessagesDB:
                     Electricity_imported_T2 NUMERIC,
                     Electricity_exported_T1 NUMERIC,
                     Electricity_exported_T2 NUMERIC,
-                    )"""
+                    )""")
                     connection.execute(p1e_query)
                 except Exception as e:
                     logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
