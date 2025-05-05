@@ -9,6 +9,9 @@ import json
 class HomeMessagesDB:
     """
     Class with methods handling the insertion, update, query and deletion of tables from a SQLite database
+
+    Parameters:
+        url: The URL pointing at the SQLite database
     """
     def __init__(self, url):
         self.url = url
@@ -19,7 +22,11 @@ class HomeMessagesDB:
         
     def create_db(self):
         """
-        Create Database if it doesn't exist
+        Create Database with (empty) tables if it doesn't exist; else connect to the database.
+        Also, creates empty tables in the database in preparation for data insertion.
+
+        Parameters:
+        - self.url: the URL pointing at the database (initialised in self)
         """
         # Connecting to the db
         self.db = sa.create_engine(self.url)
@@ -85,12 +92,26 @@ class HomeMessagesDB:
                 )""")
                 connection.execute(p1g_query)
             except Exception as e:
-                logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
+                logging.error(f"SQL CREATE function failed for table 'p1g': {e}")
+                raise e
+
+            # Creating empty table for csv tracking
+            try:
+                tracking_query = sa.text("""CREATE TABLE IF NOT EXISTS tracking (
+                file_name TEXT PRIMARY KEY
+                )""")
+                connection.execute(tracking_query)
+            except Exception as e:
+                logging.error(f"SQL CREATE function failed for table 'tracking': {e}")
                 raise e
 
     def insert_table_smartthings(self,file_name):
         """
-        Create (if it doesnt exist) tables of smart things and devices
+        Insert data from tsv files into the smartthings table
+
+        Parameters:
+        - self.db: The engine variable needed to start the connection
+        - file_name: The name of the file containing the data to be inserted into the database
         """
         # Importing the data with Pandas
         smartthings = pd.read_csv(file_name, sep="\t")
@@ -104,20 +125,19 @@ class HomeMessagesDB:
         smartthings.drop(["loc","level", "value"], inplace=True, axis = 1)
 
         # Inserting the table in the database
-        with open("tables.json", "r") as tables_file:
-            tables_data = json.load(tables_file)
-            if file_name in tables_data["smartthings_tables"]:
+        check_query = sa.text(f"SELECT file_name FROM tracking WHERE file_name='{file_name}'")
+        with self.db.connect() as connection:
+            result = connection.execute(check_query).fetchone()
+            if result:
                 logging.info(f"{file_name} was already appended to table 'smartthings'")
             else:
-                with self.db.connect() as connection:
-                    try:
-                        smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
-                    except Exception as e:
-                        logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                        raise e
-                tables_data["smartthings_tables"].append(file_name)
-                with open("tables.json", "w") as tables_file:
-                    json.dump(tables_data, tables_file, indent=4)
+                try:
+                    smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
+                    add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
+                    connection.execute(add_file_query)
+                except Exception as e:
+                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                    raise e
         
         # Preparing the devices table, which contains information about the devices
         devices.drop(devices.columns.difference(["loc","level","name"]), axis=1, inplace=True)
@@ -136,7 +156,11 @@ class HomeMessagesDB:
         
     def insert_table_p1e(self, file_name):
         """
-        Create p1e table if it does not exist
+        Insert data from the csv files into the p1e table
+
+        Parameters:
+        - self.db: The enging variable needed to start the connection
+        - file_name: The name of the file containing the data to be inserted into the database
         """
         # Importing the data
         p1e = pd.read_csv(file_name)
@@ -149,24 +173,27 @@ class HomeMessagesDB:
             p1e.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
         # Inserting the table into the database
-        with open("tables.json", "r") as tables_file:
-            tables_data = json.load(tables_file)
-            if file_name in tables_data["p1e_tables"]:
-                logging.info(f"{file_name} was already appended to table 'smartthings'")
+        check_query = sa.text(f"SELECT file_name FROM tracking WHERE file_name='{file_name}'")
+        with self.db.connect() as connection:
+            result = connection.execute(check_query).fetchone()
+            if result:
+                logging.info(f"{file_name} was already appended to table 'p1e'")
             else:
-                with self.db.connect() as connection:
-                    try:
+                try:
                     p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
+                    add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
+                    connection.execute(add_file_query)
                 except Exception as e:
                     logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
                     raise e
-                tables_data["p1e_tables"].append(file_name)
-                with open("tables.json", "w") as tables_file:
-                    json.dump(tables_data, tables_file, indent=4)
         
     def insert_table_p1g(self, file_name):
         """
-        Create p1g table if it does not exist
+        Insert data from the csv files into the p1g table.
+
+        Parameters:
+        - self.db: The engine variable needed to start the connection
+        - file_name: The name of the file containing the data to be inserted into the database
         """
         # Importing the data
         p1g = pd.read_csv(file_name)
@@ -177,24 +204,28 @@ class HomeMessagesDB:
             p1g.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
         # Inserting the table into the database
-        with open("tables.json", "r") as tables_file:
-            tables_data = json.load(tables_file)
-            if file_name in tables_data["p1g_tables"]:
-                logging.info(f"{file_name} was already appended to table 'smartthings'")
+        check_query = sa.text(f"SELECT file_name FROM tracking WHERE file_name='{file_name}'")
+        with self.db.connect() as connection:
+            result = connection.execute(check_query).fetchone()
+            if result:
+                logging.info(f"{file_name} was already appended to table 'p1g'")
             else:
-                with self.db.connect() as connection:
-                    try:
-                        p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
-                    except Exception as e:
-                        logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-                        raise e 
-                    tables_data["p1e_tables"].append(file_name)
-                    with open("tables.json", "w") as tables_file:
-                        json.dump(tables_data, tables_file, indent=4)
+                try:
+                    p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
+                    add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
+                    connection.execute(add_file_query)
+                except Exception as e:
+                    logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
+                    raise e 
 
     def query_db(self, query):
         """
-        Function handling queries to the database
+        Function handling queries to the database. 
+        Input SQL code as string, returns a pandas dataframe with the query and allows saving query result as csv.
+
+        Parameters:
+        - self.db: The engine variable needed to start the connection
+        - query: The desired query to be carried out
         """
         # Querying and printing the result
         with self.db.connect() as connection:
@@ -224,14 +255,20 @@ class HomeMessagesDB:
     
     def drop_table(self, table_name):
         """
-        Function handling table deletions
+        Function handling table deletions. 
+        Drops table from database and removes the corresponding file name from the 'tracking' table.
+
+        Parameters:
+        - self.db: The engine variable needed to start the connection
+        - table_name: The name of the table to be dropped
         """
         with self.db.connect() as connection:
             table_names = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' and tbl_name = '{table_name}'")
             tables = connection.execute(table_names).fetchone()
-            if table_name:
+            if tables:
                 drop_query = sa.text(f"DROP TABLE {table_name}")
                 connection.execute(drop_query)
                 print("Table dropped successfully")
+                delete_query = sa.text(f"DELETE FROM tracking WHERE file_name LIKE '%{table_name}%'")
             else:
                 logging.error(f"Table {table_name} does not exist in the database {self.url}.")

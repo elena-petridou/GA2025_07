@@ -133,6 +133,8 @@ class HomeMessagesDB:
             else:
                 try:
                     smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
+                    add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
+                    connection.execute(add_file_query)
                 except Exception as e:
                     logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
                     raise e
@@ -179,6 +181,8 @@ class HomeMessagesDB:
             else:
                 try:
                     p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
+                    add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
+                    connection.execute(add_file_query)
                 except Exception as e:
                     logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
                     raise e
@@ -208,6 +212,8 @@ class HomeMessagesDB:
             else:
                 try:
                     p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
+                    add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
+                    connection.execute(add_file_query)
                 except Exception as e:
                     logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
                     raise e 
