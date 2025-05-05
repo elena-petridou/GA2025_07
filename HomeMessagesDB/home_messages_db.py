@@ -95,7 +95,7 @@ class HomeMessagesDB:
         
         # Preparing the devices table, which contains information about the devices
         devices.drop(devices.columns.difference(["loc","level","name"]), axis=1, inplace=True)
-        devices.drop_duplicates(inplace=True)
+        devices.drop_duplicates(inplace=True, ignore_index = True)
 
         # Inserting the devices table into the database
         with self.db.connect() as connection:
@@ -114,7 +114,7 @@ class HomeMessagesDB:
                     raise e
                 for i in range(devices.shape[0]):
                     insert_query = sa.text(f"""INSERT OR REPLACE INTO devices (name, level, loc) 
-                        VALUES ({devices.loc[i,"name"]}, {devices.loc[i,"level"]}, {devices.loc[i,"loc"]})""")
+                        VALUES ('{devices.loc[i,"name"]}', '{devices.loc[i,"level"]}', '{devices.loc[i,"loc"]}')""")
                     try:
                         connection.execute(insert_query)
                     except Exception as e:
@@ -137,7 +137,9 @@ class HomeMessagesDB:
         p1e = pd.read_csv(file_name)
 
         # Preparing the data
-        p1e["epoch"] = p1e["epoch"].timestamp()
+        p1e["epoch"] = pd.to_datetime(p1e["time"], utc=True).astype("int64") // 10**9 
+        p1e.drop("time", axis=1,inplace = True)
+        
         for column in p1e:
             p1e.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
@@ -154,7 +156,7 @@ class HomeMessagesDB:
                     Electricity_imported_T1 NUMERIC,
                     Electricity_imported_T2 NUMERIC,
                     Electricity_exported_T1 NUMERIC,
-                    Electricity_exported_T2 NUMERIC,
+                    Electricity_exported_T2 NUMERIC
                     )""")
                     connection.execute(p1e_query)
                 except Exception as e:
@@ -205,7 +207,7 @@ class HomeMessagesDB:
                 try:
                     p1g_query = sa.text("""CREATE TABLE IF NOT EXISTS p1g (
                     epoch INTEGER PRIMARY KEY,
-                    Total_gas_used NUMERIC,
+                    Total_gas_used NUMERIC
                 )""")
                     connection.execute(p1g_query)
                 except Exception as e:
@@ -260,11 +262,11 @@ class HomeMessagesDB:
         save_file = input("\nWould you like to save the result of this query as a new file? (y/N)\t")
         if save_file == "y":
             try:
-                file_name = f"query_result_{datetime.now()}"
-                df.to_csv(file_name.replace(" ", "_"))
-                logging.info(f"File {file_name.replace(" ", "_")} saved successfully.")
+                file_name = (f"query_result_{datetime.now()}").replace(" ","_").replace(":","_")
+                df.to_csv(file_name)
+                logging.info(f"File {file_name} saved successfully.")
             except Exception as e:
-                logging.error(f"Could not save file {file_name.replace(" ", "_")}: {e}")
+                logging.error(f"Could not save file {file_name}: {e}")
                 raise e
         return(df)
     
