@@ -9,6 +9,9 @@ import json
 class HomeMessagesDB:
     """
     Class with methods handling the insertion, update, query and deletion of tables from a SQLite database
+
+    Parameters:
+        url: The URL pointing at the SQLite database
     """
     def __init__(self, url):
         self.url = url
@@ -19,7 +22,11 @@ class HomeMessagesDB:
         
     def create_db(self):
         """
-        Create Database with (empty) tables if it doesn't exist. Else connect to the database.
+        Create Database with (empty) tables if it doesn't exist; else connect to the database.
+        Also, creates empty tables in the database in preparation for data insertion.
+
+        Parameters:
+        - self.url: the URL pointing at the database (initialised in self)
         """
         # Connecting to the db
         self.db = sa.create_engine(self.url)
@@ -101,6 +108,10 @@ class HomeMessagesDB:
     def insert_table_smartthings(self,file_name):
         """
         Insert data from tsv files into the smartthings table
+
+        Parameters:
+        - self.db: The enging variable needed to start the connection
+        - file_name: The name of the file containing the data to be inserted into the database
         """
         # Importing the data with Pandas
         smartthings = pd.read_csv(file_name, sep="\t")
@@ -144,6 +155,10 @@ class HomeMessagesDB:
     def insert_table_p1e(self, file_name):
         """
         Insert data from the csv files into the p1e table
+
+        Parameters:
+        - self.db: The enging variable needed to start the connection
+        - file_name: The name of the file containing the data to be inserted into the database
         """
         # Importing the data
         p1e = pd.read_csv(file_name)
@@ -170,7 +185,11 @@ class HomeMessagesDB:
         
     def insert_table_p1g(self, file_name):
         """
-        Insert data from the csv files into the p1g table
+        Insert data from the csv files into the p1g table.
+
+        Parameters:
+        - self.db: The enging variable needed to start the connection
+        - file_name: The name of the file containing the data to be inserted into the database
         """
         # Importing the data
         p1g = pd.read_csv(file_name)
@@ -195,7 +214,12 @@ class HomeMessagesDB:
 
     def query_db(self, query):
         """
-        Function handling queries to the database. Input SQL code as string, returns a pandas dataframe with the query and allows saving query result as csv.
+        Function handling queries to the database. 
+        Input SQL code as string, returns a pandas dataframe with the query and allows saving query result as csv.
+
+        Parameters:
+        - self.db: The enging variable needed to start the connection
+        - query: The desired query to be carried out
         """
         # Querying and printing the result
         with self.db.connect() as connection:
@@ -225,7 +249,12 @@ class HomeMessagesDB:
     
     def drop_table(self, table_name):
         """
-        Function handling table deletions. Drops table from database and removes the corresponding files from json.
+        Function handling table deletions. 
+        Drops table from database and removes the corresponding file name from the 'tracking' table.
+
+        Parameters:
+        - self.db: The enging variable needed to start the connection
+        - table_name: The name of the table to be dropped
         """
         with self.db.connect() as connection:
             table_names = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' and tbl_name = '{table_name}'")
