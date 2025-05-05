@@ -52,7 +52,7 @@ class HomeMessagesDB:
             try:
                 try:
                     create_query = sa.text("""CREATE TABLE IF NOT EXISTS smartthings (
-                    id INTEGER PRIMARY KEY,
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
                     epoch TEXT NOT NULL,
                     capability TEXT NOT NULL,
@@ -66,7 +66,7 @@ class HomeMessagesDB:
                     logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
                     raise e
                 try:
-                    smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=True, index_label="id")
+                    smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
                 except Exception as e:
                     logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
                     raise e
@@ -273,12 +273,3 @@ class HomeMessagesDB:
                 print("Table dropped successfully")
             else:
                 logging.error(f"Table {table_name} does not exist in the database {self.url}.")
-        
-        
-# if is_zipfile(file_name):
-#            try:
-#                shutil.unpack_archive(file_name)
-#            except:
-#                raise Exception as e:
-#                    print(f"Could not unzip the file {file_name}: {e}")
-#            file_name = file_name.replace(".zip", "")
