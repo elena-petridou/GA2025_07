@@ -40,8 +40,7 @@ class HomeMessagesDB:
 
         # Convert to datetime and then to UNIX timestamp 
         smartthings["epoch"] = pd.to_datetime(smartthings["epoch"], utc=True).astype("int64") // 10**9  
-        
-        smartthings = smartthings.copy()
+    
         smartthings.loc[:, 'value_int'] = pd.to_numeric(smartthings['value'], errors='coerce')
         smartthings.loc[:, 'value_str'] = smartthings['value'].where(smartthings['value_int'].isna())
         
@@ -77,10 +76,10 @@ class HomeMessagesDB:
 
         # Creating foreign keys only for the tables that exist
         for table in ["p1e","p1g"]:
-        #    table_names = sa.text(f"SELECT tableName FROM sqlite_master WHERE type='table' AND tableName='{table}'")
+            table_names = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
             with self.db.connect() as connection:
-            #    tables = connection.execute(table_names).fetchall()
-                tables = connection.GetTableNames()
+                tables = connection.execute(table_names).fetchall()
+            #    tables = connection.GetTableNames()
                 if table in tables:
                     connection.execute(f'''ALTER TABLE smartthings
                             ADD CONSTRAINT fk_smartthings_{table}
@@ -88,7 +87,7 @@ class HomeMessagesDB:
                                 REFERENCES {table} (epoch)''')
         
         # Preparing the devices table, which contains information about the devices
-        devices.drop(df.columns.difference(["loc","level","name"]), axis=1, inplace=True)
+        devices.drop(devices.columns.difference(["loc","level","name"]), axis=1, inplace=True)
         devices.drop_duplicates(inplace=True)
 
         # Inserting the devices table into the database
@@ -154,8 +153,8 @@ class HomeMessagesDB:
                     raise e
 
         # Handling the foreign key
-        table_names = sa.text("SELECT tableName FROM sqlite_master WHERE type='table' AND tableName='smartthings'")
-        with db.connect() as connection:
+        table_names = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='smartthings'")
+        with self.db.connect() as connection:
             tables = connection.execute(table_names).fetchall()
             if "smartthings" in tables:
                 connection.execute('''ALTER TABLE p1e
@@ -196,7 +195,7 @@ class HomeMessagesDB:
                 raise e   
 
         # Handling the foreign key
-        table_names = sa.text("SELECT tableName FROM sqlite_master WHERE type='table' AND tableName='smartthings'")
+        table_names = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='smartthings'")
         with self.db.connect() as connection:
             tables = connection.execute(table_names).fetchall()
             if "smartthings" in tables:
@@ -224,10 +223,12 @@ class HomeMessagesDB:
         Function handling table deletions
         """
         with self.db.connect() as connection:
-            tables = connection.GetTableNames()
-            if table_name in tables:
+            table_names = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' and tbl_name = '{table_name}'")
+            tables = connection.execute(table_names).fetchone()
+            if table_name:
                 drop_query = sa.text(f"DROP TABLE {table_name}")
                 connection.execute(drop_query)
+                print("Table dropped successfully")
             else:
                 logging.error(f"Table {table_name} does not exist in the database {self.url}.")
         
