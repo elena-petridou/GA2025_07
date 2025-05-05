@@ -24,68 +24,69 @@ class HomeMessagesDB:
         self.db = sa.create_engine(self.url)
 
         # Creating empty table smartthings
-        try:
-            create_query = sa.text("""CREATE TABLE IF NOT EXISTS smartthings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            epoch TEXT NOT NULL,
-            capability TEXT NOT NULL,
-            attribute TEXT NOT NULL,
-            unit TEXT,
-            value_int NUMERIC,
-            value_str TEXT
-            )""")
-            connection.execute(create_query)
-        except Exception as e:
-            logging.error(f"SQL CREATE function failed for table 'smartthings': {e}")
-            raise e
+        with self.db.connect() as connection:
+            try:
+                create_query = sa.text("""CREATE TABLE IF NOT EXISTS smartthings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                epoch TEXT NOT NULL,
+                capability TEXT NOT NULL,
+                attribute TEXT NOT NULL,
+                unit TEXT,
+                value_int NUMERIC,
+                value_str TEXT
+                )""")
+                connection.execute(create_query)
+            except Exception as e:
+                logging.error(f"SQL CREATE function failed for table 'smartthings': {e}")
+                raise e
 
-        # Creating empty table devices
-        try:
-            devices_query = sa.text("""CREATE TABLE IF NOT EXISTS devices (
-            name TEXT PRIMARY KEY,
-            level TEXT NOT NULL,
-            loc TEXT NOT NULL,
-            FOREIGN KEY (name) 
-                REFERENCES smartthings (name)
-            )""")
-            connection.execute(devices_query)
-        except Exception as e:
-            logging.error(f"SQL CREATE function failed for table 'devices': {e}")
-            raise e
+            # Creating empty table devices
+            try:
+                devices_query = sa.text("""CREATE TABLE IF NOT EXISTS devices (
+                name TEXT PRIMARY KEY,
+                level TEXT NOT NULL,
+                loc TEXT NOT NULL,
+                FOREIGN KEY (name) 
+                    REFERENCES smartthings (name)
+                )""")
+                connection.execute(devices_query)
+            except Exception as e:
+                logging.error(f"SQL CREATE function failed for table 'devices': {e}")
+                raise e
 
-        # Creating empty table p1e
-        try:
-            p1e_query = sa.text("""CREATE TABLE IF NOT EXISTS p1e (
-            epoch INTEGER PRIMARY KEY,
-            Import_T1_kWh NUMERIC,
-            Import_T2_kWh NUMERIC,
-            Export_T1_kWh NUMERIC,
-            Export_T2_kWh NUMERIC,
-            Electricity_imported_T1 NUMERIC,
-            Electricity_imported_T2 NUMERIC,
-            Electricity_exported_T1 NUMERIC,
-            Electricity_exported_T2 NUMERIC,
-            FOREIGN KEY (epoch) 
-                REFERENCES smartthings (epoch)
-            )""")
-            connection.execute(p1e_query)
-        except Exception as e:
-            logging.error(f"SQL CREATE function failed for table 'p1e': {e}")
-            raise e
+            # Creating empty table p1e
+            try:
+                p1e_query = sa.text("""CREATE TABLE IF NOT EXISTS p1e (
+                epoch INTEGER PRIMARY KEY,
+                Import_T1_kWh NUMERIC,
+                Import_T2_kWh NUMERIC,
+                Export_T1_kWh NUMERIC,
+                Export_T2_kWh NUMERIC,
+                Electricity_imported_T1 NUMERIC,
+                Electricity_imported_T2 NUMERIC,
+                Electricity_exported_T1 NUMERIC,
+                Electricity_exported_T2 NUMERIC,
+                FOREIGN KEY (epoch) 
+                    REFERENCES smartthings (epoch)
+                )""")
+                connection.execute(p1e_query)
+            except Exception as e:
+                logging.error(f"SQL CREATE function failed for table 'p1e': {e}")
+                raise e
 
-        # Creating empty table p1g
-        try:
-            p1g_query = sa.text("""CREATE TABLE IF NOT EXISTS p1g (
-            epoch INTEGER PRIMARY KEY,
-            Total_gas_used NUMERIC,
-            FOREIGN KEY (epoch) 
-                REFERENCES smartthings (epoch)
-            )""")
-            connection.execute(p1g_query)
-        except Exception as e:
-            logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
-            raise e
+            # Creating empty table p1g
+            try:
+                p1g_query = sa.text("""CREATE TABLE IF NOT EXISTS p1g (
+                epoch INTEGER PRIMARY KEY,
+                Total_gas_used NUMERIC,
+                FOREIGN KEY (epoch) 
+                    REFERENCES smartthings (epoch)
+                )""")
+                connection.execute(p1g_query)
+            except Exception as e:
+                logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
+                raise e
 
     def insert_table_smartthings(self,file_name):
         """
