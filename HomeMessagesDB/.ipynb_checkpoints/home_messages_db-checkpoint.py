@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 import gzip
 import logging
+import json
 
 class HomeMessagesDB:
     """
@@ -27,7 +28,6 @@ class HomeMessagesDB:
         with self.db.connect() as connection:
             try:
                 create_query = sa.text("""CREATE TABLE IF NOT EXISTS smartthings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 epoch TEXT NOT NULL,
                 capability TEXT NOT NULL,
@@ -104,12 +104,20 @@ class HomeMessagesDB:
         smartthings.drop(["loc","level", "value"], inplace=True, axis = 1)
 
         # Inserting the table in the database
-        with self.db.connect() as connection:
-            try:
-                smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
-            except Exception as e:
-                logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                raise e
+        with open("tables.json", "r") as tables_file:
+            tables_data = json.load(tables_file)
+            if file_name in tables_data["smartthings_tables"]:
+                logging.info(f"{file_name} was already appended to table 'smartthings'")
+            else:
+                with self.db.connect() as connection:
+                    try:
+                        smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
+                    except Exception as e:
+                        logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                        raise e
+                tables_data["smartthings_tables"].append(file_name)
+                with open("tables.json", "w") as tables_file:
+                    json.dump(tables_data, tables_file, indent=4)
         
         # Preparing the devices table, which contains information about the devices
         devices.drop(devices.columns.difference(["loc","level","name"]), axis=1, inplace=True)
@@ -141,12 +149,20 @@ class HomeMessagesDB:
             p1e.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
         # Inserting the table into the database
-        with self.db.connect() as connection:
-            try:
-                p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
-            except Exception as e:
-                logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                raise e
+        with open("tables.json", "r") as tables_file:
+            tables_data = json.load(tables_file)
+            if file_name in tables_data["p1e_tables"]:
+                logging.info(f"{file_name} was already appended to table 'smartthings'")
+            else:
+                with self.db.connect() as connection:
+                    try:
+                    p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
+                except Exception as e:
+                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                    raise e
+                tables_data["p1e_tables"].append(file_name)
+                with open("tables.json", "w") as tables_file:
+                    json.dump(tables_data, tables_file, indent=4)
         
     def insert_table_p1g(self, file_name):
         """
@@ -161,12 +177,20 @@ class HomeMessagesDB:
             p1g.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
         # Inserting the table into the database
-        with self.db.connect() as connection:
-            try:
-                p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
-            except Exception as e:
-                logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-                raise e 
+        with open("tables.json", "r") as tables_file:
+            tables_data = json.load(tables_file)
+            if file_name in tables_data["p1g_tables"]:
+                logging.info(f"{file_name} was already appended to table 'smartthings'")
+            else:
+                with self.db.connect() as connection:
+                    try:
+                        p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
+                    except Exception as e:
+                        logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
+                        raise e 
+                    tables_data["p1e_tables"].append(file_name)
+                    with open("tables.json", "w") as tables_file:
+                        json.dump(tables_data, tables_file, indent=4)
 
     def query_db(self, query):
         """
