@@ -85,7 +85,17 @@ class HomeMessagesDB:
                 )""")
                 connection.execute(p1g_query)
             except Exception as e:
-                logging.error(f"SQL CREATE function failed for table {file_name}: {e}")
+                logging.error(f"SQL CREATE function failed for table 'p1g': {e}")
+                raise e
+
+            # Creating empty table for csv tracking
+            try:
+                tracking_query = sa.text("""CREATE TABLE IF NOT EXISTS tracking (
+                file_name TEXT PRIMARY KEY,
+                )""")
+                connection.execute(tracking_query)
+            except Exception as e:
+                logging.error(f"SQL CREATE function failed for table 'tracking': {e}")
                 raise e
 
     def insert_table_smartthings(self,file_name):
@@ -104,20 +114,17 @@ class HomeMessagesDB:
         smartthings.drop(["loc","level", "value"], inplace=True, axis = 1)
 
         # Inserting the table in the database
-        with open("tables.json", "r") as tables_file:
-            tables_data = json.load(tables_file)
-            if file_name in tables_data["smartthings_tables"]:
+        check_query = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{file_name}'")
+        with self.db.connect() as connection:
+            result = connection.execute(check_query).fetchone()
+            if result:
                 logging.info(f"{file_name} was already appended to table 'smartthings'")
             else:
-                with self.db.connect() as connection:
-                    try:
-                        smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
-                    except Exception as e:
-                        logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                        raise e
-                tables_data["smartthings_tables"].append(file_name)
-                with open("tables.json", "w") as tables_file:
-                    json.dump(tables_data, tables_file, indent=4)
+                try:
+                    smartthings.to_sql("smartthings", self.db.connect(), if_exists="append", index=False)
+                except Exception as e:
+                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                    raise e
         
         # Preparing the devices table, which contains information about the devices
         devices.drop(devices.columns.difference(["loc","level","name"]), axis=1, inplace=True)
@@ -149,20 +156,17 @@ class HomeMessagesDB:
             p1e.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
         # Inserting the table into the database
-        with open("tables.json", "r") as tables_file:
-            tables_data = json.load(tables_file)
-            if file_name in tables_data["p1e_tables"]:
-                logging.info(f"{file_name} was already appended to table 'smartthings'")
+        check_query = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{file_name}'")
+        with self.db.connect() as connection:
+            result = connection.execute(check_query).fetchone()
+            if result:
+                logging.info(f"{file_name} was already appended to table 'p1e'")
             else:
-                with self.db.connect() as connection:
-                    try:
-                    p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
-                except Exception as e:
-                    logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
-                    raise e
-                tables_data["p1e_tables"].append(file_name)
-                with open("tables.json", "w") as tables_file:
-                    json.dump(tables_data, tables_file, indent=4)
+                try:
+                p1e.to_sql("p1e", self.db.connect(), if_exists="append", index=False)
+            except Exception as e:
+                logging.error(f"Could not insert table {file_name} in the database {self.url}: {e}")
+                raise e
         
     def insert_table_p1g(self, file_name):
         """
@@ -177,20 +181,17 @@ class HomeMessagesDB:
             p1g.rename(columns = {column : column.replace(" ", "_")}, inplace = True)
 
         # Inserting the table into the database
-        with open("tables.json", "r") as tables_file:
-            tables_data = json.load(tables_file)
-            if file_name in tables_data["p1g_tables"]:
-                logging.info(f"{file_name} was already appended to table 'smartthings'")
+        check_query = sa.text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{file_name}'")
+        with self.db.connect() as connection:
+            result = connection.execute(check_query).fetchone()
+            if result:
+                logging.info(f"{file_name} was already appended to table 'p1g'")
             else:
-                with self.db.connect() as connection:
-                    try:
-                        p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
-                    except Exception as e:
-                        logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
-                        raise e 
-                    tables_data["p1e_tables"].append(file_name)
-                    with open("tables.json", "w") as tables_file:
-                        json.dump(tables_data, tables_file, indent=4)
+                try:
+                    p1g.to_sql("p1g", self.db.connect(), if_exists="append", index=False)
+                except Exception as e:
+                    logging.error(f"Pandas could not insert table {file_name} in the database {self.url}: {e}")
+                    raise e 
 
     def query_db(self, query):
         """
