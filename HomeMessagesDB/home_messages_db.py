@@ -202,7 +202,7 @@ class HomeMessagesDB:
         # Preparing the data
         P1e["epoch"] = pd.to_datetime(P1e["time"], utc=True).astype("int64") // 10**9 
         P1e.drop("time", axis=1,inplace = True)
-        P1e.columns = ['epoch','Electricity_imported_T1','Electricity_imported_T2','Electricity_exported_T1','Electricity_exported_T2']
+        P1e.columns = ['Electricity_imported_T1','Electricity_imported_T2','Electricity_exported_T1','Electricity_exported_T2','epoch']
         
         P1e.dropna(inplace=True, how= 'all', subset=[
                         'Electricity_imported_T1',
@@ -211,7 +211,7 @@ class HomeMessagesDB:
                         'Electricity_exported_T2'])
 
         # Create table if it was dropped
-        create_p1e_table(self)
+        self.create_p1e_table()
 
         # Inserting the table into the database
         check_query = sa.text(f"SELECT file_name FROM tracking WHERE file_name='{file_name}'")
