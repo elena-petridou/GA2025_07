@@ -209,6 +209,9 @@ class HomeMessagesDB:
                         'Electricity_imported_T2',
                         'Electricity_exported_T1',
                         'Electricity_exported_T2'])
+
+        # Create table if it was dropped
+        self.create_p1e_table()
         
         # Temporary table for aggregation purposes
         with self.db.begin() as connection:
@@ -223,9 +226,6 @@ class HomeMessagesDB:
                         GROUP BY epoch""")
             P1e_new = pd.read_sql(agg_query, con = connection)
         self.drop_table("temp")
-
-        # Create table if it was dropped
-        self.create_p1e_table()
 
         # Inserting the table into the database
         check_query = sa.text(f"SELECT file_name FROM tracking WHERE file_name='{file_name}'")
