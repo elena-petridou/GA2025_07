@@ -11,14 +11,27 @@ import os
 @click.command() #function below should be treated as cli command
 @click.option('-d','--dburl','d', help='flavor text as of now', required = True) # option -d for user
 @click.option('--query', default=None, is_flag=True, help='Run a query instead of inserting files')
+@click.option('--rm', default=None, is_flag=True, help='Removes all data from table')
+
 @click.argument('files',nargs=-1)
 
-def main(d,files,query):
+def main(d,files,query,rm):
     """Very clear explanation of the function which will be written in the future"""
     
     from home_messages_db import HomeMessagesDB
     db = HomeMessagesDB(d)
     db.create_db()
+    # remove option
+    if rm:
+        click.echo('Are you sure you want to remove all data from the table? Yes/No')
+        userinp= input()
+        if userinp.lower == 'yes':    
+            db= db.erase_table('smartthings')
+            click.echo(output)
+            return
+        elif userinp.lower =='no':
+            return
+        return  
     
     # query cluster
     if query:
@@ -43,7 +56,7 @@ def main(d,files,query):
                 datepars1=list(map(int, timeinp.split('-')))
                 date1= int(datetime(*datepars1).timestamp())
                 date2=date1
-            output=db.query_db(f'SELECT * FROM smartthings WHERE epoch => {date1} AND epoch <= {date2}')
+            output=db.query_db(f'SELECT * FROM smartthings WHERE epoch >= {date1} AND epoch <= {date2}')
             
         elif userinp =="name":
             name_inp = input("Which name do you want to filter the dataset for?")
@@ -51,7 +64,7 @@ def main(d,files,query):
             output = db.query_db(query)
             
         elif userinp =='size':
-            query = f'SELECT COUNT(*) FROM smartthings'
+            output = db.query_db(f'SELECT COUNT(*) as number_of_rows FROM smartthings')
         click.echo(output)
         return
     
