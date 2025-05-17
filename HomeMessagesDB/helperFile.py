@@ -47,7 +47,6 @@ def file_insertion(files, mydb, toolname):
     Inserts a file from the folder into the specified table in the Database
 
     """
-
     if toolname == "P1e":
         for file in files:
             mydb.insert_table_P1e(file)
@@ -71,13 +70,14 @@ def erase(mydb,tableName):
     except Exception as e:
             click.echo(f"Error: {e}")
 
+
 def query_size(mydb, tableName):
     """
     Queries the size of the specified table from the MySQL database
     """
     try:
         temp = mydb.query_db(f"SELECT * FROM '{tableName}'")
-        click.echo(f"The P1e table has {temp.shape[0]} rows and {temp.shape[1]} columns")
+        click.echo(f"The {tableName} table has {temp.shape[0]} rows and {temp.shape[1]} columns")
     except Exception as e:
         click.echo(f"Could not get the dimensions for this data, Error: {e}")
 
@@ -147,21 +147,22 @@ def parse_user_answer(input):
     return (input)
 
 
-def return_dates(db):
+
+def return_entries_between_dates(db, toolname):
     """
     Queries data from specific date or between specific dates, based on user input.
     Allows user to save it to a file if desired.
 
-    Returns:
+    Returns: 
         Data for specified dates.
     """
-
-    click.echo(
-        "From when until when? In format: YYYY-mm-dd:YYYY-mm-dd. You may also specify a single date by omitting everything after the colon")
+    
+    click.echo("From when until when? In format: YYYY-mm-dd:YYYY-mm-dd. You may also specify a single date by ommitting everything after the colon")
     timeinp = input()
     start_date, end_date = return_dates(timeinp)
 
     click.echo("Would you like to save the output to a file? Y/N")
     save_file_option = parse_user_answer(input())
 
-    db.query_db(f'SELECT * FROM smartthings WHERE epoch => {start_date} AND epoch <= {end_date}', save_file_option)
+    db.query_db(f'SELECT * FROM {toolname} WHERE epoch => {start_date} AND epoch <= {end_date}', save_file_option)
+
