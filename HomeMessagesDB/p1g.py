@@ -15,9 +15,9 @@ def query_average_gas(db):
     timeinp = input()
     start_date, end_date = hf.return_dates(timeinp)
     
-    average = db.query_db(f'SELECT AVG(Total_gas_used) AS average_value
+    average = db.query_db(f'''SELECT AVG(Total_gas_used) AS average_value
                         FROM P1g
-                        WHERE epoch >= {start_date} AND epoch <= {end_date}')
+                        WHERE epoch >= {start_date} AND epoch <= {end_date}''')
     click.echo(average)
 
 
