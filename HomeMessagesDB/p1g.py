@@ -57,6 +57,7 @@ def p1g(dburl, erasetable, query, query_average, size, filename):
     elif filename:
         files = hf.check_filepaths(filename, "P1g")
         hf.file_insertion(files, mydb, "P1g")
+        click.echo("Table(s) inserted")
 
 
     

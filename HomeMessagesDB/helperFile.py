@@ -61,16 +61,6 @@ def file_insertion(files, mydb, toolname):
         click.echo("Please provide a valid toolname")
 
 
-def erase(mydb,tableName):
-    """
-    Erases the specified table from the MySQL database
-    """
-    try:
-        mydb.erase_table_content(tableName)
-        click.echo(f"Successfully erased {tableName} content")
-    except Exception as e:
-            click.echo(f"Could not erase this table from the database: {e}")
-
 
 def query_size(mydb, tableName):
     """
@@ -144,9 +134,27 @@ def parse_user_answer(input):
                        "yes": True,
                        "n": False,
                        "no": False}
-    input = accepted_inputs[input]
-    return (input)
+    input = accepted_inputs[input.lower()]
+    if input == True or input == False:
+        return (input)
+    else:
+        raise Exception("Sorry, that answer was not recognised. Please try again")
 
+
+def erase(mydb,tableName):
+    """
+    Erases the specified table from the MySQL database
+    """
+    click.echo("Are you sure you want to erase all the contents of this table from the database? Y/N")
+    inp = parse_user_answer(input())
+    if inp == True:
+        try:
+            mydb.erase_table_content(tableName)
+            click.echo(f"Successfully erased {tableName} content")
+        except Exception as e:
+            click.echo(f"Could not erase this table from the database: {e}")
+    else:
+        click.echo("Ok, table not erased")
 
 
 def return_entries_between_dates(db, toolname):

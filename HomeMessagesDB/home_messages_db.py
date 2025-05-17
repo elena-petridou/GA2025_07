@@ -361,7 +361,7 @@ class HomeMessagesDB:
                 if tables:
                     drop_query = sa.text(f"DROP TABLE {table_name}")
                     connection.execute(drop_query)
-                    print("Table dropped successfully")
+                    logging.info("Table dropped successfully")
                     delete_query = sa.text(f"DELETE FROM tracking WHERE file_name LIKE '%{table_name}%'")
                     connection.execute(delete_query)
                 else:
