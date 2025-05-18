@@ -21,7 +21,7 @@ def validate_filename(filename, toolname):
 
 def check_filepaths(user_input_files, toolname):
     """
-    Fetches valid filepaths based on user's input. Can handle single filename, wildcard names with asterisk, or wildcard with question marks.
+    Fetches valid filepaths based on user's input. Can handle single filename, and wildcard names with asterisk.
 
     Returns:
         List of one or multiple filenames
@@ -74,6 +74,9 @@ def query_size(mydb, tableName):
 
 
 def query_electricity(mydb,tablename):
+    """
+    Queries electricity consumption from the P1e table in teh database. Allows user to specify either import, export, or both
+    """
     elec_inp = input("Do you want electricity: Import/Export/Export & Import")
     if(elec_inp.lower() == " import"):
         query = f"SELECT AVG((Electricity_imported_T1 +Electricity_imported_T2)/2) as avg_import FROM '{tablename}'"
@@ -95,7 +98,6 @@ def query_name(mydb, tablename):
     """
     Queries the name of the specified table from the MySQL database. Currently specific to the Smartthings table
     """
-
     name_inp = input("Which device name do you want to filter the dataset for?")
     try:
         query = f"SELECT * FROM '{tablename}' WHERE name = '{name_inp}'"
@@ -106,6 +108,11 @@ def query_name(mydb, tablename):
 
 
 def date_into_timestamp(date):
+    """
+    Turns specified date into timestamp corresponding to epochs in the database. Raises Exception if date was specified in the wrong format. 
+
+    Returns: timestamps for epochs
+    """
     try:
         datepars = list(map(int, date.split('-')))  # Convert string input into numeric list
         print("datepars: ", datepars)
@@ -119,6 +126,11 @@ def date_into_timestamp(date):
 
 
 def return_dates(timeinp):
+    """
+    Parses dates into timestaps.
+    
+    Returns: valid timestamp (via helper function date_into_timestamp), corresponding to epochs in the database.
+    """
     if ':' in timeinp:  # if the separator is included in the query
         dates = timeinp.split(':')  # split the list
         start_date = date_into_timestamp(dates[0])
@@ -130,6 +142,11 @@ def return_dates(timeinp):
 
 
 def parse_user_answer(input):
+    """
+    Function to parse user answer to yes or no questions. Raises error if input cannot be understood.
+
+    Returns: True or False
+    """
     accepted_inputs = {"y": True,
                        "yes": True,
                        "n": False,
