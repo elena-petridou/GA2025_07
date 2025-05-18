@@ -287,15 +287,8 @@ class HomeMessagesDB:
             P1g.to_sql("temp", connection, if_exists="replace", index=False)
             agg_query = sa.text("""SELECT epoch, 
                         avg(Total_gas_used) as Total_gas_used
-                        FROM (
-                            SELECT epoch,
-                                Total_gas_used
-                            FROM temp
-                            UNION ALL
-                            SELECT epoch,
-                                Total_gas_used
-                            FROM P1g
-                        )
+                        FROM temp
+                        WHERE epoch NOT IN (SELECT epoch FROM P1g)
                         GROUP BY epoch""")
             P1g_new = pd.read_sql(agg_query, con = connection)
         self.drop_table("temp")
@@ -368,7 +361,7 @@ class HomeMessagesDB:
                 if tables:
                     drop_query = sa.text(f"DROP TABLE {table_name}")
                     connection.execute(drop_query)
-                    print("Table dropped successfully")
+                    logging.info("Table dropped successfully")
                     delete_query = sa.text(f"DELETE FROM tracking WHERE file_name LIKE '%{table_name}%'")
                     connection.execute(delete_query)
                 else:

@@ -3,6 +3,7 @@ import click
 import glob
 import logging
 from datetime import datetime
+import pandas as pd
 
 def validate_filename(filename, toolname):
     """
@@ -47,29 +48,19 @@ def file_insertion(files, mydb, toolname):
     Inserts a file from the folder into the specified table in the Database
 
     """
-
     if toolname == "P1e":
         for file in files:
             mydb.insert_table_P1e(file)
     elif toolname == "P1g":
         for file in files:
-            mydb.insert_table_P1e(file)
+            mydb.insert_table_P1g(file)
     elif toolname == "smartthings":
         for file in files:
-            mydb.insert_table_P1e(file)
+            mydb.insert_table_smartthings(file)
     else:
         click.echo("Please provide a valid toolname")
 
 
-def erase(mydb,tableName):
-    """
-    Erases the specified table from the MySQL database
-    """
-    try:
-        mydb.erase_table_content(tableName)
-        click.echo(f"Successfully erased {tableName} content")
-    except Exception as e:
-            click.echo(f"Error: {e}")
 
 def query_size(mydb, tableName):
     """
@@ -77,7 +68,7 @@ def query_size(mydb, tableName):
     """
     try:
         temp = mydb.query_db(f"SELECT * FROM '{tableName}'")
-        click.echo(f"The P1e table has {temp.shape[0]} rows and {temp.shape[1]} columns")
+        click.echo(f"The {tableName} table has {temp.shape[0]} rows and {temp.shape[1]} columns")
     except Exception as e:
         click.echo(f"Could not get the dimensions for this data, Error: {e}")
 
@@ -143,25 +134,49 @@ def parse_user_answer(input):
                        "yes": True,
                        "n": False,
                        "no": False}
-    input = accepted_inputs[input]
-    return (input)
+    input = accepted_inputs[input.lower()]
+    if input == True or input == False:
+        return (input)
+    else:
+        raise Exception("Sorry, that answer was not recognised. Please try again")
 
 
-def return_dates(db):
+def erase(mydb,tableName):
+    """
+    Erases the specified table from the MySQL database
+    """
+    click.echo("Are you sure you want to erase all the contents of this table from the database? Y/N")
+    inp = parse_user_answer(input())
+    if inp == True:
+        try:
+            mydb.erase_table_content(tableName)
+            click.echo(f"Successfully erased {tableName} content")
+        except Exception as e:
+            click.echo(f"Could not erase this table from the database: {e}")
+    else:
+        click.echo("Ok, table not erased")
+
+
+def return_entries_between_dates(db, toolname):
     """
     Queries data from specific date or between specific dates, based on user input.
     Allows user to save it to a file if desired.
 
-    Returns:
+    Returns: 
         Data for specified dates.
     """
-
-    click.echo(
-        "From when until when? In format: YYYY-mm-dd:YYYY-mm-dd. You may also specify a single date by omitting everything after the colon")
+    
+    click.echo("From when until when? In format: YYYY-mm-dd:YYYY-mm-dd. You may also specify a single date by ommitting everything after the colon")
     timeinp = input()
     start_date, end_date = return_dates(timeinp)
 
     click.echo("Would you like to save the output to a file? Y/N")
     save_file_option = parse_user_answer(input())
 
-    db.query_db(f'SELECT * FROM smartthings WHERE epoch => {start_date} AND epoch <= {end_date}', save_file_option)
+    result = db.query_db(f'SELECT * FROM {toolname} WHERE epoch >= {start_date} AND epoch <= {end_date}', save_file_option)
+    if result.shape[0] == 0:
+        click.echo("No results found for those dates!")
+    else:
+        click.echo(result)
+
+
