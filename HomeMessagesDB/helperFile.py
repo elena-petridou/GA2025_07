@@ -55,8 +55,9 @@ def file_insertion(files, mydb, toolname):
         for file in files:
             mydb.insert_table_P1g(file)
     elif toolname == "smartthings":
-        for file in files:
-            mydb.insert_table_smartthings(file)
+        with click.progressbar(files, label='inserting files') as bar:
+            for files in bar:
+                mydb.insert_table_smartthings(files)
     else:
         click.echo("Please provide a valid toolname")
 
