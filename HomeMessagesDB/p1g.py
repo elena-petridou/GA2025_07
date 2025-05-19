@@ -4,21 +4,8 @@ import glob
 import home_messages_db as db
 import logging
 from datetime import datetime
-import helperFile as hf
 
 
-
-
-    
-def query_average_gas(db):
-    click.echo("From when to when? In format: YYYY-mm-dd. YYYY-mm-dd:YYYY-mm-dd. You may also specify a single date by ommitting everything after the colon")
-    timeinp = input()
-    start_date, end_date = hf.return_dates(timeinp)
-    
-    average = db.query_db(f'''SELECT AVG(Total_gas_used) AS average_value
-                        FROM P1g
-                        WHERE epoch >= {start_date} AND epoch <= {end_date}''')
-    click.echo(average)
 
 
 
@@ -43,21 +30,22 @@ def p1g(dburl, erasetable, query, query_average, size, filename):
     mydb.create_db()
     
     if erasetable:
-        hf.erase(mydb, "P1g")
+        mydb.erase_table_content("P1g")
     
     elif query:
-        hf.return_entries_between_dates(mydb, "P1g")
+        db.return_entries_between_dates(mydb, "P1g")
     
     elif query_average:
-        query_average_gas(mydb)
+        db.query_average_gas(mydb)
     
     elif size:
-        hf.query_size(mydb, "P1g")
+        db.query_size(mydb, "P1g")
     
     elif filename:
-        files = hf.check_filepaths(filename, "P1g")
-        hf.file_insertion(files, mydb, "P1g")
-        click.echo("Table(s) inserted")
+        files = db.check_filepaths(filename, "P1g")
+        for file in files:
+            mydb.insert_table_P1g(file)
+        
 
 
     
