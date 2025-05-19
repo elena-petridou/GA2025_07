@@ -489,7 +489,7 @@ def query_size(mydb, tableName):
 
 def query_electricity(mydb,tablename):
     """
-    Queries electricity consumption from the P1e table in teh database. Allows user to specify either import, export, or both
+    Queries electricity consumption from the P1e table in the database. Allows user to specify either import, export, or both
     """
     elec_inp = input("Do you want electricity: Import/Export/Export & Import")
     if(elec_inp.lower() == " import"):
@@ -510,7 +510,7 @@ def query_electricity(mydb,tablename):
 
 def query_name(mydb, tablename):
     """
-    Queries the name of the specified table from the MySQL database. Currently specific to the Smartthings table
+    Queries entries with a specific device name from the database. Currently specific to the Smartthings table
     """
     name_inp = input("Which device name do you want to filter the dataset for?")
     try:
