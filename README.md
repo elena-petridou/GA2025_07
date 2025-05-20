@@ -219,8 +219,8 @@ This method queries electricity consumption from the P1e table in the database. 
 #### *query_device(tablename, name_inp = None, dataframe = False)*
 **USEFUL FOR REPORTS** This method queries entries with a specific device name from the database. Currently specific to the Smartthings table.
 
-If used by the scripts/tools (with default arguments dataframe = False and name_inp = None), outputs the result on the console.
-If used in the reports (with argument dataframe = True and name_inp passed), returns the result in a Pandas dataframe.
+    - If used by the scripts/tools (with default arguments dataframe = False and name_inp = None), outputs the result on the console.
+    - If used in the reports (with argument dataframe = True and name_inp passed), returns the result in a Pandas dataframe.
         Parameters:
             tablename: str
                 Table from which to query
@@ -242,8 +242,9 @@ If the database does not contain entries between these dates, then the average u
 #### *return_entries_between_dates(self, toolname, time_inp = None, dataframe = False, save_file = False)*
 **USEFUL FOR REPORTS** This method queries data from specific date or between specific datetimes, based on user input. It allows the user to save it to a file if desired.
 
-If used by the scripts/tools (with default argument dataframe = False and timeinp = False), outputs the result on the console (and if required saves to file).
-If used in the reports (with argument dataframe = True and timeinp specified), returns the result in a Pandas dataframe.
+    - If used by the scripts/tools (with default argument dataframe = False and timeinp = False), outputs the result on the console (and if required saves to file).
+    - If used in the reports (with argument dataframe = True and timeinp specified), returns the result in a Pandas dataframe.
+    
         Parameters:
             time_inp: str 
                 Must be in format: YYYY-MM-DD-hh-mm:YYYY-MM-DD-hh-mm OR YYYY-MM-DD OR YYYY-MM-DD:YYYY-MM-DD
