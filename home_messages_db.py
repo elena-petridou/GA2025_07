@@ -466,7 +466,6 @@ class HomeMessagesDB:
                     P1g_new.to_sql("P1g", self.db.connect(), if_exists="append", index=False)
                     add_file_query = sa.text(f"INSERT INTO tracking (file_name) VALUES ('{file_name}')")
                     connection.execute(add_file_query)
-                    click.echo(f"{file_name} successfully inserted into table P1g in database")
                 except Exception as e:
                     logging.error(f"Could not insert data {file_name} in the P1g table in the database {self.url}: {e}")
                     click.echo(f"{file_name} was already appended to table 'P1g'")
