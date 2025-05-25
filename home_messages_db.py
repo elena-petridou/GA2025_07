@@ -541,7 +541,7 @@ class HomeMessagesDB:
     
 
 
-    def erase_table_content(self, table_name, ask = True):
+    def erase_table_content(self, table_name, ask = True, message = True):
         """
         Function handling table deletions. 
         Deletes the data from the table and removes the corresponding file name from the 'tracking' table.
@@ -565,8 +565,10 @@ class HomeMessagesDB:
                         connection.execute(erase_query)
                         delete_query = sa.text(f"DELETE FROM tracking WHERE file_name LIKE '%{table_name}%'")
                         connection.execute(delete_query)
-                        logging.info(f"Data in table {table_name} deleted successfully")
-                        click.echo(f"Data in table {table_name} deleted successfully")
+                        if message:
+                            logging.info(f"Data in table {table_name} deleted successfully")
+                            click.echo(f"Data in table {table_name} deleted successfully")
+                        
                     except Exception as e:
                         logging.error(f"Could not erase the content of table {table_name}: {e}")
                         click.echo(f"Could not erase the content of table {table_name}: {e}")
@@ -729,34 +731,30 @@ class HomeMessagesDB:
         else:
             click.echo(result)
 
-    def insert_all(self, file_names):
-        """
-        This method inserts all files that are given as argument in the correct table. Created
-        for the reports.
+    def insert_all(self):
+            """
+            This method inserts all files that are given as argument in the correct table. Created
+            for the reports. 
 
-        Parameters:
-            file_names: list
-                A list of file names or paths
+            Returns:
+                None
+            """
 
-        Returns:
-            None
-        """
-        # Erasing all content   
-        db.erase_table_content("smartthings", ask = False)
-        db.erase_table_content("P1e", ask = False)
-        db.erase_table_content("P1g", ask = False)
-
-        # Adding all tables
-        files = check_filepaths(file_names,"P1e")
-        for file in files:
-            db.insert_table_P1e(file)
-        files = check_filepaths(file_names,"smartthings")
-        for file in files:
-            db.insert_table_smartthings(file)
-        files = check_filepaths(file_names,"P1g")
-        for file in files:
-            db.insert_table_P1g(file)
-    
+            # Erasing all content   
+            self.erase_table_content("smartthings", ask = False, message = False)
+            self.erase_table_content("P1e", ask = False, message = False)
+            self.erase_table_content("P1g", ask = False, message = False)
+                        
+            # Adding all tables
+            files = check_filepaths("P1e*","P1e")
+            for file in files:
+                self.insert_table_P1e(file)
+            files = check_filepaths("smartthings*","smartthings")
+            for file in files:
+                self.insert_table_smartthings(file)
+            files = check_filepaths("P1g*","P1g")
+            for file in files:
+                self.insert_table_P1g(file)
 
 
 
