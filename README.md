@@ -1,5 +1,9 @@
 # Essentials for Data Science group assignment
 
+## Notes
+- When testing the CLI tools, we noticed the instruction for smartthings was not referring to a real file in the directory. Please follow the instructions in the tool for inserting single documents
+- All CLI tools work best if the filename (including when using the wildcard argument) is specified using quotation marks so we recommend using this syntax. This is also the case since some team members use MacOS, for which ONLY the file argument in string quotations works.
+
 ## Documentation
 
 ### Global functions for use in scripts and reports
@@ -301,7 +305,7 @@ This methods takes a series of file names and inserts the files in the correct t
 | :- | :- | :- | :- |
 | Eleonora Roncaglia | s2826577 | mseleanorjk | home_messages_db.py,\_\_init\_\_.py,Clustering_report.ipynb |
 | Mariel Canela Ramírez | s | mcanela01 | home_messages_db.py,Clustering_report.ipynb |
-| Elena Petridou | s | elena-petridou | P1g.py,Energy_usage_Report.ipynb,home_messages_db.py |
+| Elena Petridou | s2029197 | elena-petridou | P1g.py,Energy_usage_Report.ipynb,home_messages_db.py |
 | Miro Eisenbarth | s | mebgits | P1g.py,Energy_usage_Report.ipynb,home_messages_db.py |
 | Bashier Gulzar | s | bassias | smartthings.py,Openweather_Report.ipynb |
 | Eva Rovan | s | eva-rovan | openweathermap.py,Openweather_Report.ipynb |
