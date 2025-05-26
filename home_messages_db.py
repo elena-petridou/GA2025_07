@@ -114,8 +114,10 @@ def validate_filename(filenames, toolname):
         """
         valid_filepaths = []
         if len(filenames) == 1:
-            if toolname not in str(filenames[0]) or (".csv" not im str(filenames[0]) and ".tsv" not in str(filenames[0])): # if we are trying to insert a file with the wrong name or extension (and this is the only filename specified by the user), raise error
-                raise ValueError(f"{filenames[0]} is not a valid {toolname} filepath!  Please enter a valid {toolname} filepath.") 
+            if toolname not in str(filenames[0]): # if we are trying to insert a file with the wrong name 
+                raise ValueError(f"{filenames[0]} is not a valid {toolname} filepath!  Please enter a valid {toolname} filepath.")
+            elif ".csv" not in str(filenames[0]) and ".tsv" not in str(filenames[0]): # if we are trying to insert something that is not a wildcard but is not the correct file format (thus not .csv, .tsv, .csv.gz, .tsv.gz)
+                raise ValueError(f"{filenames[0]} is not a valid {toolname} filepath!  Please enter a valid {toolname} filepath.")
             else:
                 valid_filepaths.append(filenames[0])
         else:
@@ -128,7 +130,7 @@ def validate_filename(filenames, toolname):
                     valid_filepaths.append(filename)
         return(valid_filepaths)
 
-
+    
 
 def check_filepaths(user_input_files, toolname):
         """
@@ -151,15 +153,15 @@ def check_filepaths(user_input_files, toolname):
         Returns:
             List of one or multiple filenames
         """
-        if len(user_input_files) == 1 and ".py" in user_input_files[0]: # if user provided only 1 file as an argument and if ".py" is its extension, then no data files are found in this directory (meaning the data is stored in a 'data' folder)
+        if len(user_input_files) == 1 and (".py" in user_input_files[0] or "*" in user_input_files[0]): # if user provided only 1 file as an argument and if ".py" is its extension, or if the user specifies the wildcard in quotations (macOS) then no data files are found in this directory (meaning the data is stored in a 'data' folder)
             if toolname not in str(user_input_files[0]):
                 raise ValueError(f"{user_input_files} is not a valid {toolname} filepath! Please enter a valid {toolname} filepath.")
             else:
                 script_dir = os.path.dirname(os.path.realpath(__file__)) # therefore, the following lines enter a directory called "data", then the directory of the toolname
                 tool_dir = os.path.join(script_dir, 'data', toolname) # so with these lines we are able to fetch data from a directory structure like the one in which the data was uploaded to Brightspace
-                filename = validate_filename(user_input_files, toolname)
-                full_path = os.path.join(tool_dir, filename)
+                full_path = os.path.join(tool_dir, user_input_files[0])
                 files = glob.glob(full_path) # now fetch all files from this directory
+                click.echo(files)
                 valid_filepaths = validate_filename(files, toolname)
                 if len(valid_filepaths) > 0:
                     return(valid_filepaths)
