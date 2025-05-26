@@ -159,10 +159,7 @@ def check_filepaths(user_input_files, toolname):
                 raise ValueError(f"{user_input_files} is not a valid {toolname} filepath! Please enter a valid {toolname} filepath.")
             elif ".py" in user_input_files[0]: # if user provided only 1 file as an argument but what the input becomes is the tool + ".py", then no data files are found in this directory (meaning the data is stored in a 'data' folder)
                 filename = user_input_files[0].replace(".py", "*")
-            script_dir = os.path.dirname(os.path.realpath(__file__)) # therefore, the following lines enter a directory called "data", then the directory of the toolname
-            tool_dir = os.path.join(script_dir, 'data', toolname) # so with these lines we are able to fetch data from a directory structure like the one in which the data was uploaded to Brightspace
-            full_path = os.path.join(tool_dir, filename)
-            files = glob.glob(full_path) # now fetch all files from this directory
+            files = glob.glob(filename) + glob.glob(f"data/{toolname}/{filename}") # now fetch all files from this directory or the data/toolname directory
             valid_filepaths = validate_filename(files, toolname)
             if len(valid_filepaths) > 0:
                 return(valid_filepaths)
