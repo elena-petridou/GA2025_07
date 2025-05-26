@@ -49,7 +49,6 @@ def smartthings(dburl ,query ,query_device ,size ,erasetable ,filename):
                     mydb.insert_table_smartthings(file)
                 except Exception as e:
                     click.echo(f"Error- failed to insert file: {e}",err=True, nl=True)
-        click.echo('File insertion completed!')
     
 if __name__ == '__main__':
     smartthings()
