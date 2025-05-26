@@ -1,8 +1,13 @@
 # Essentials for Data Science group assignment
 
-# Documentation
+## Notes
+- When testing the CLI tools, we noticed the instruction for smartthings was not referring to a real file in the directory. Please follow the instructions in the tool for inserting single documents
+- All CLI tools work by providing the filename (including when using the wildcard argument). In the case of MacOS, it ONLY works if the file argument is in string quotations marks, so we recommend using this syntax. In the case of WindowsOS it works regardless of the presence of quotation marks.
+- When using the CLI tools, ensure that data is either in the working directory which the script is called from or in a directory with structure: current_working_dir\data\toolname (just like the directory structure in which data was provided in on Brightspace)
 
-## Global functions for use in scripts and reports
+## Documentation
+
+### Global functions for use in scripts and reports
 
 #### *parse_user_answer(input)*
 This function parses user answer to yes or no questions. Raises error if input cannot be understood.
@@ -42,25 +47,25 @@ If two dates (but no time) are specified, start_date will be the specified start
         end_date: int (via helper function date_into_timestamp), timestamp corresponding to epochs in the database (if data from this epoch exists/has been added to the database).
 
 #### *validate_filename(filename, toolname)*
-This function checks if the filename specified by the user is suitable for this tool. E.g.: p1g files only for p1g tool. 
+This function checks if the filenames specified by the user is suitable for this tool. E.g.: p1g files only for p1g tool. It also checks if files are of a suitable format. E.g.: .csv, .tsv, .csv.gz and .tsv.gz files.
       Parameters:
-          filename: str
-              Filename specified by the user as input to the command-line tools 
+          filenames: list
+              Filenames to check (passed from check_filepaths() function)
           toolname: str
               Which tool called this function
         
       Raises:
           ValueError: "{filename} is not a valid {toolname} filepath!" 
-          if the specified filepath does not correspond to a datafile compatible with the tool which called it.
+          if the specified filepath is the only one specified by the user and does not correspond to a datafile compatible with the tool which called it.
       
       Returns:
           str: valid filename for tool currently in use
 
 #### *check_filepaths(user_input_files, toolname)*
-This function fetches valid filepaths based on user's input. Can handle single filename, and wildcard names with asterisk.
+This function fetches valid filepaths based on user's input. Can handle a single filename, and wildcard names with asterisk.
         Parameters:
-            user_input_files: str
-                String of filename the user wants to input into the database, or the wildcard query for this tool.
+            user_input_files: str or tuple
+                String of filename the user wants inserted/or the wildcard string, or tuple passed from the CLI tools. 
             toolname: str
                 Which tool called this function
 
@@ -69,12 +74,14 @@ This function fetches valid filepaths based on user's input. Can handle single f
                 If no files matching the specified filename are found in the directory.
             ValueError: "(One of) the file(s) {file} specified is not a valid file/is corrupted. Please try again."
                 If the filename specified corresponds to a corrupt file/not a file.
+            Exception: "No files specified! Please specify (a) filename(s) to insert!"
+                If the user has not provided any filenames to insert
 
         Returns:
             List of one or multiple filenames
 
-#### *timestamp_into_gmt2(timestamp)*
-This function takes NIX epoch timestamp and converts into datetime in GMT+2 timezone
+#### *timestamp_into_ams_time(timestamp)*
+This function takes NIX epoch timestamp and converts into datetime in Europe/Amsterdam timezone
 
     Parameters:
         timestamp: float
@@ -82,10 +89,10 @@ This function takes NIX epoch timestamp and converts into datetime in GMT+2 time
     
     Returns:
         datetime.datetime object
-            Datetime in GMT-2 (Noordwijk time)
+            Datetime in Europe/Amsterdam (Noordwijk time)
 
 
-## HomeMessagesDB class methods
+### HomeMessagesDB class methods
 
 The class HomeMessagesDB is initialised with a database URL. For the purpose of this documentation, the instance of the class will be called `database`. Each method includes exception handling, for a clear identification of the issue.
 
@@ -126,11 +133,11 @@ The method then creates a table `devices` where the information about the smart 
 
 This method creates a table in the database with the structure:
 
-* epoch (primary key)
-* Electricity_imported_T1
-* Electricity_imported_T2
-* Electricity_exported_T1
-* Electricity_exported_T2
+* `epoch` (primary key)
+* `Electricity_imported_T1`
+* `Electricity_imported_T2`
+* `Electricity_exported_T1`
+* `Electricity_exported_T2`
 
 Additionally, the method checks whether the table `smartthings` exists; if it does, then `epoch` is declared as foreign key to `smartthings`.
 
@@ -138,8 +145,8 @@ Additionally, the method checks whether the table `smartthings` exists; if it do
 
 This method creates a table in the database with the structure:
 
-* epoch (primary key)
-* Total_gas_used
+* `epoch` (primary key)
+* `Total_gas_used`
 
 Additionally, the method checks whether the table `smartthings` exists; if it does, then `epoch` is declared as foreign key to `smartthings`.
 
@@ -168,17 +175,23 @@ This method takes as argument the file name and reads a single (zipped or simply
 * Renames the columns in order to have consistent nomenclature
 * Drops rows for which all columns but `epoch` present NAs
 
-Then, the method creates the table `p1e`
+Then, the method creates the table `p1e` in case it was dropped or it did not exist. Subsequently, the method queries the tracking file to see if the file had already been added to the database; if it has, the method returns a warning, otherwise it adds the name of the file to the `tracking` table, and then it inserts the file into the `p1e` table on the database.
+
+#### *database.insert_table_p1g(file)*
+
+This method takes as argument the file name and reads a single (zipped or simply) csv file and inputs it into a Pandas dataframe. It executes the following actions: 
+
+* Converts the `time` variable into the `epoch` variables, which contains the epoch value of `time` 
+* Renames the columns in order to have consistent nomenclature
+* Drops rows for which all columns but `epoch` present NAs
+
+Then, the method creates the table `p1e` in case it was dropped or it did not exist. Subsequently, the method queries the tracking file to see if the file had already been added to the database; if it has, the method returns a warning, otherwise it adds the name of the file to the `tracking` table, and then it inserts the file into the `p1e` table on the database.
 
 
-... [MORE METHODS FOR CREATING AND POPULATING THE DATABASE] ...
+*Note on OpenWeatherMap data: We decided to not include the OpenWeatherMap data into the database but instead get it directly from the source everytime, this will be handled in the OpenWeatherMap tool.*
 
+#### *database.query_db(query, save_file = False)*
 
-Note on OpenWeatherMap data: We decided to not include the OpenWeatherMap data into the database but instead get it directly from the source everytime, this will be handled in the OpenWeatherMap tool.
-
-### Methods for querying the database
-
-#### *query_db(query, save_file = False)*
 This method takes as input a string that gets converted to an SQL text to be able to query from the database, and it returns the result as a pandas dataframe.
 Takes in SQL query as string, returns a pandas dataframe with the query and allows saving query result as csv.
 It has an additional argument "save_file" which when set to true, allows the user to save the query as a csv file in the current directory, the name of this file will be query_result_{current time} (e.g. query_result_2025-05-05_16_18_57.315004). 
@@ -192,8 +205,31 @@ It has an additional argument "save_file" which when set to true, allows the use
         Returns:
             pd.DataFrame: Dataframe resulting from the query ran
 
-#### *query_size(table_name)*
+#### *database.drop_table(table_name)*
+This method drops the table that is passed as an argument and deletes the names of the inserted files from the tracking table.
+
+        Parameters:
+            table_name: str
+                The table we want to drop.
+        
+        Raises:
+            Exception: "Table {table_name} does not exist in the database {self.url}."
+
+#### *database.erase_table_content(table_name, ask = True)*
+This method deletes all records inside a table, and deletes the names of the inserted files from the tracking table.
+
+        Parameters:
+            table_name: str
+                The table whose content we want to erase.
+            ask: Bool
+                Whether or not the function should ask for confirmation of erasure
+        
+        Raises:
+            Exception: "Could not erase the content of table {table_name}: Error: " plus the error which stops us from fetching the table size.
+
+#### *database.query_size(table_name)*
 This method Queries the size of the specified table from the database. It is called in the Tool scripts.
+        
         Parameters:
             table_name: str
                 The table whose size we wish to find out.
@@ -201,7 +237,7 @@ This method Queries the size of the specified table from the database. It is cal
         Raises:
             Exception: "Could not get the dimensions for this data. Error: " plus the error which stops us from fetching the table size.
 
-#### *return_whole_table(table_name)*
+#### *database.return_whole_table(table_name)*
 **USEFUL FOR REPORTS** This method returns the whole specified table from the database as a pandas dataframe
         Parameters:
             table_name: str
@@ -210,13 +246,13 @@ This method Queries the size of the specified table from the database. It is cal
         Returns:
             pandas.dataframe: containing all data from the table corresponding to the parameter passed to the function.
 
-#### *query_electricity(tablename)*
+#### *database.query_electricity(tablename)*
 This method queries electricity consumption from the P1e table in the database. Allows user to specify either import, export, or both.
         Parameters:
             tablename: str
                 Table to fetch electricity consumption from. (Only P1e is supported.)
 
-#### *query_device(tablename, name_inp = None, dataframe = False)*
+#### *database.query_device(tablename, name_inp = None, dataframe = False)*
 **USEFUL FOR REPORTS** This method queries entries with a specific device name from the database. Currently specific to the Smartthings table.
 
     - If used by the scripts/tools (with default arguments dataframe = False and name_inp = None), outputs the result on the console.
@@ -235,11 +271,11 @@ This method queries electricity consumption from the P1e table in the database. 
         Returns:
             pandas.Dataframe: Containing the entries in the smartthings table pertaining to the device specified
 
-#### *query_average_gas()*
+#### *database.query_average_gas()*
 This method displays average gas usage between two dates according to data currently in the database. Only applicable to P1g table.
 If the database does not contain entries between these dates, then the average use output will be 0.
 
-#### *return_entries_between_dates(self, toolname, time_inp = None, dataframe = False, save_file = False)*
+#### *database.return_entries_between_dates(self, toolname, time_inp = None, dataframe = False, save_file = False)*
 **USEFUL FOR REPORTS** This method queries data from specific date or between specific datetimes, based on user input. It allows the user to save it to a file if desired.
 
     - If used by the scripts/tools (with default argument dataframe = False and timeinp = False), outputs the result on the console (and if required saves to file).
@@ -256,8 +292,25 @@ If the database does not contain entries between these dates, then the average u
         Returns:
             (optional) pandas.dataframe: with results from the query
 
-**Extra functionality**:
+#### *database.insert_all(file_names)*
+This methods takes a series of file names and inserts the files in the correct table on the database.
 
-Drop Table: drop_table: This method takes as argument the name of the table to be dropped, it drops the table entirely from the dataframe; simultaneously, it deletes from the tracking table, the entries corresponding to the dropped table. This function does not allow to drop the tracking table.
+        Parameters:
+            file_names: str 
+                String of file paths, can contain a wildcard
+            
+        Raises:
+            Exceptions as in insert tables functions
 
-Delete table data: erase_table: This method takes as argument the name of the table from where the data will be deleted, it deletes all entries from said table and from the tracking table as well.
+## Contributions
+
+| FullName | StudentId | GitHubName | Files |
+| :- | :- | :- | :- |
+| Eleonora Roncaglia | s2826577 | mseleanorjk | home_messages_db.py,\_\_init\_\_.py,Clustering_report.ipynb, README.md |
+| Mariel Canela Ramírez | s4140990 | mcanela01 | home_messages_db.py,Clustering_report.ipynb |
+| Elena Petridou | s2029197 | elena-petridou | P1g.py,Energy_usage_Report.ipynb,home_messages_db.py, smartthings.py, README.md |
+| Miro Eisenbarth | s4382706 | mebgits | P1g.py,Energy_usage_Report.ipynb,home_messages_db.py |
+| Bashier Gulzar | s4506987 | bassias | smartthings.py,Openweather_Report.ipynb |
+| Eva Rovan | s2644207 | eva-rovan | openweathermap.py,Openweather_Report.ipynb |
+
+
