@@ -4,8 +4,12 @@ This project was part of the Essentials for Data Science 2025 course in Leiden U
 
 We implemented the following tools: 
 1. A Database access module 'HomeMessagesDB' (contained in home_messages_db.py) which can create a database, insert data into it and query it.
-2. Command-line tools for interacting with the 'HomeMessagesDB' module from the Command Line. These are: P1e.py, P1g.py, smartthings.py, 
-3. 
+2. Command-line tools for interacting with the 'HomeMessagesDB' module from the Command Line.
+       - P1g.py allows inserting and querying data from the database related to gas usage data from a smart meter.
+       - P1e.py allows inserting and querying data from the database related to electricity usage data from a smart meter.
+       - openweathermap.py allows the user to collect data, insert and query it from the Open Weather API.
+       - smartthings.py allows insertng and querying data from various smart devices throughout the home.
+3. Reports presenting insights gained from the data analysis, with various visualisations, experiments and explanations.
 
 ## Notes
 - When testing the CLI tools, we noticed the instruction for smartthings was not referring to a real file in the directory. Please follow the instructions in the tool for inserting single documents
