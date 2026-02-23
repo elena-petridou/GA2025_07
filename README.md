@@ -5,14 +5,14 @@ This project was part of the Essentials for Data Science 2025 course in Leiden U
 We implemented the following tools: 
 1. A Database access module 'HomeMessagesDB' (contained in home_messages_db.py) which can create a database, insert data into it and query it.
 2. Command-line tools for interacting with the 'HomeMessagesDB' module from the Command Line.
-       - P1g.py allows inserting and querying data from the database related to gas usage data from a smart meter.
-       - P1e.py allows inserting and querying data from the database related to electricity usage data from a smart meter.
-       - openweathermap.py allows the user to collect data, insert and query it from the Open Weather API.
-       - smartthings.py allows insertng and querying data from various smart devices throughout the home.
-3. Reports presenting insights gained from the data analysis, with various visualisations, experiments and explanations. All three notebooks are self-contained reports containing text explanations alongside the visualisations and analysis, for easy reproducibility. 
-       - Clustering_exploratory.ipynb carries out data exploration and using clustering techniques to extract patterns from the data
-       - Energy_usage_Report.ipynb answers questions about daily energy usage patterns and explores whether we can see from energy usage data whether someone is home or not
-       - Openweather_Report.ipynb explores what effect weather patterns have on energy consumption
+   - P1g.py allows inserting and querying data from the database related to gas usage data from a smart meter.
+   - P1e.py allows inserting and querying data from the database related to electricity usage data from a smart meter.
+   - openweathermap.py allows the user to collect data, insert and query it from the Open Weather API.
+   - smartthings.py allows insertng and querying data from various smart devices throughout the home.
+4. Reports presenting insights gained from the data analysis, with various visualisations, experiments and explanations. All three notebooks are self-contained reports containing text explanations alongside the visualisations and analysis, for easy reproducibility. 
+   - Clustering_exploratory.ipynb carries out data exploration and using clustering techniques to extract patterns from the data
+   - Energy_usage_Report.ipynb answers questions about daily energy usage patterns and explores whether we can see from energy usage data whether someone is home or not
+   - Openweather_Report.ipynb explores what effect weather patterns have on energy consumption
 
 ## Notes
 - When testing the CLI tools, we noticed the instruction for smartthings was not referring to a real file in the directory. Please follow the instructions in the tool for inserting single documents
